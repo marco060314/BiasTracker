@@ -11,9 +11,18 @@ from lexicons import HEDGE_WORDS, WEASEL_WORDS, BUZZWORDS_WORDS, EMOTION_WORDS
 from spacy.matcher import PhraseMatcher
 import os
 from sentence_transformers import SentenceTransformer, util
+import requests
+import json
 
 
 classifier = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
+
+def get_docs(article):
+    sentences = sent_tokenize(article[0]["article"])
+    nlp = spacy.load("en_core_web_sm")
+    BATCH_SIZE = 8
+    docs = list(nlp.pipe(sentences, batch_size=BATCH_SIZE)) #batch processing sizee
+    return docs
 
 def sentiment_analysis(article):
     sentences = sent_tokenize(article[0]["article"])
@@ -40,13 +49,7 @@ def sentiment_analysis(article):
     return avg_polarity, standard_dev
 
 #spaCy section
-def bias_analysis(article):
-    sentences = sent_tokenize(article[0]["article"])
-    nlp = spacy.load("en_core_web_sm")
-    title_doc = nlp(article[0]["headline"])
-    BATCH_SIZE = 8
-    docs = list(nlp.pipe(sentences, batch_size=BATCH_SIZE)) #batch processing size
-    word_count = len(article[0]["article"].split())
+def bias_analysis(docs):
     emotion_count = 0
     weasel_count = 0
     buzzwords_count = 0
@@ -144,8 +147,20 @@ def find_statements(docs):
 
 
 #misinformation section
-def misinformation_analysis(article):
+#TODO: check if this takes too long
+def misinformation_analysis(docs):
+    ans = {}
     with open(os.path.join(os.path.dirname(__file__), "lexicons", "API"), "r") as f:
         API_KEY = [line.strip() for line in f][0]
-    return 0
+    claims = find_statements(docs)
+    for i in claims:
+        query = "%20".join(i.split(" "))
+        API_LINK = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={API_KEY}"
+        result = requests.get(API_LINK)
+        if result.status_code == 200:
+            data = result.json()
+            if (len(data) == 0):
+                continue
+            ans[i] = data["claims"][0]["claimReview"][0]["textualRating"]
+    return ans
 
