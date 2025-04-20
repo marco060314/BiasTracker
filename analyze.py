@@ -9,6 +9,8 @@ import spacy
 from spacy.tokens import DocBin
 from lexicons import HEDGE_WORDS, WEASEL_WORDS, BUZZWORDS_WORDS, EMOTION_WORDS
 from spacy.matcher import PhraseMatcher
+import os
+from sentence_transformers import SentenceTransformer, util
 
 
 classifier = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
@@ -108,10 +110,42 @@ def agent_analysis(docs):
     return active_count, passive_count, omitted_agent_count
 
 
+def is_important(sent):
+    has_entity = any(ent.label_ in {"PERSON", "ORG", "GPE", "DATE", "PERCENT", "MONEY"} for ent in sent.ents)
+    has_subject = any(tok.dep_ == "nsubj" for tok in sent)
+    has_object = any(tok.dep_ in {"dobj", "obj"} for tok in sent)
+    has_modal = any(tok.lemma_.lower() in {"must", "will", "prove", "confirm"} for tok in sent)
+
+    score = sum([has_entity, has_subject and has_object, has_modal])
+    return score >= 2  # mark as important if 2+ signals are true
+
+#find key statements and remove similar statements
+def find_statements(docs):
+    sentences = []
+    for sent in docs.sents:
+        if is_important(sent):
+            sentences.append(sent)
+    unique_sentences = []
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+    embeddings = model.encode(sentences, convert_to_tensor=True)
+    cosine_scores = util.pytorch_cos_sim(embeddings, embeddings)
+    for i, sentence in enumerate(sentences):
+        is_duplicate = False
+        for kept_idx in range(len(unique_sentences)):
+            score = util.cos_sim(embeddings[i], embeddings[kept_idx])[0][0]
+            if score > 0.85:
+                is_duplicate = True
+                break
+        if not is_duplicate:
+            unique_sentences.append(i)
+
+    return [sentences[i] for i in unique_sentences]
+
+
+
 #misinformation section
 def misinformation_analysis(article):
-    with open("venv/API.txt", "r") as f:
+    with open(os.path.join(os.path.dirname(__file__), "lexicons", "API"), "r") as f:
         API_KEY = [line.strip() for line in f][0]
-
     return 0
 
