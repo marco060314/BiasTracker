@@ -49,6 +49,7 @@ def bias_analysis(article):
     weasel_count = 0
     buzzwords_count = 0
     hedge_count = 0
+    active, passive, agent = agent_analysis(docs)
 
     for sent in docs.sents:
         for token in sent:
