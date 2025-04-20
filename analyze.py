@@ -110,6 +110,8 @@ def agent_analysis(docs):
 
 #misinformation section
 def misinformation_analysis(article):
+    with open("venv/API.txt", "r") as f:
+        API_KEY = [line.strip() for line in f][0]
 
     return 0
 
