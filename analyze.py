@@ -1,10 +1,7 @@
 import run_scraper
 import torch
-import nltk
 import math
-nltk.download("punkt")
 from transformers import pipeline
-from nltk.tokenize import sent_tokenize
 import spacy
 from spacy.tokens import DocBin
 from lexicons import HEDGE_WORDS, WEASEL_WORDS, BUZZWORDS_WORDS, EMOTION_WORDS
@@ -15,17 +12,18 @@ import requests
 import json
 
 
+nlp = spacy.load("en_core_web_sm")
 classifier = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
 
+
+                                         
 def get_docs(article):
-    sentences = sent_tokenize(article[0]["article"])
-    nlp = spacy.load("en_core_web_sm")
     BATCH_SIZE = 8
-    docs = list(nlp.pipe(sentences, batch_size=BATCH_SIZE)) #batch processing sizee
+    docs = nlp(article[0]["article"])
     return docs
 
-def sentiment_analysis(article):
-    sentences = sent_tokenize(article[0]["article"])
+def sentiment_analysis(docs):
+    sentences = [sent.text for sent in docs.sents]
     results = classifier(sentences)
     #add polarity for headline
     polarity = 0
@@ -128,10 +126,9 @@ def find_statements(docs):
     for sent in docs.sents:
         if is_important(sent):
             sentences.append(sent)
-    unique_sentences = []
     model = SentenceTransformer("all-MiniLM-L6-v2")
     embeddings = model.encode(sentences, convert_to_tensor=True)
-    cosine_scores = util.pytorch_cos_sim(embeddings, embeddings)
+    unique_sentences = []
     for i, sentence in enumerate(sentences):
         is_duplicate = False
         for kept_idx in range(len(unique_sentences)):
@@ -153,7 +150,7 @@ def misinformation_analysis(docs):
     with open(os.path.join(os.path.dirname(__file__), "lexicons", "API"), "r") as f:
         API_KEY = [line.strip() for line in f][0]
     claims = find_statements(docs)
-    for i in claims:
+    for i in claims[:5]:
         query = "%20".join(i.split(" "))
         API_LINK = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={API_KEY}"
         result = requests.get(API_LINK)

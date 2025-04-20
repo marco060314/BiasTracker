@@ -20,4 +20,5 @@ def run_scraper(target_url):
     process.start()
 
     return scraped_data
+
     
