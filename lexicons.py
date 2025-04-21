@@ -19,4 +19,4 @@ def load_nrc_emotions(filename):
 HEDGE_WORDS = load_wordlist("hedges.txt")
 WEASEL_WORDS = load_wordlist("weasel.txt")
 BUZZWORDS_WORDS = load_wordlist("buzzwords.txt")
-EMOTION_WORDS = load_nrc_emotions("NRC_Emotion_Lexicon.txt")
+EMOTION_WORDS = load_nrc_emotions("unique_words.txt")

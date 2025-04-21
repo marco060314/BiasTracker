@@ -56,6 +56,7 @@ def bias_analysis(docs):
     active, passive, agent = agent_analysis(docs)
 
     for sent in docs.sents:
+        #NLP the lexicons and then do the phrasematcher thingy
         for token in sent:
             if token.lemma_.lower() in EMOTION_WORDS:
                 emotion_count += 1
@@ -146,11 +147,14 @@ def find_statements(docs):
 
 #misinformation section
 #TODO: check if this takes too long
+'''
 def misinformation_analysis(docs):
     ans = {}
-    with open(os.path.join(os.path.dirname(__file__), "lexicons", "API"), "r") as f:
+    with open(os.path.join(os.path.dirname(__file__), "lexicons", "API.txt"), "r") as f:
         API_KEY = [line.strip() for line in f][0]
     claims = find_statements(docs)
+    print("AHAHHAHAHAHHAHAHA")
+    print(claims)
     for i in claims[:5]:
         query = "%20".join(i.split(" "))
         API_LINK = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={API_KEY}"
@@ -162,3 +166,4 @@ def misinformation_analysis(docs):
             ans[i] = data["claims"][0]["claimReview"][0]["textualRating"]
     return ans
 
+'''
