@@ -54,18 +54,25 @@ def bias_analysis(docs):
     buzzwords_count = 0
     hedge_count = 0
     active, passive, agent = agent_analysis(docs)
+    matcher = PhraseMatcher(nlp.vocab)
+    #for sent in docs.sents:#TODO: is it better to do by sentences or just all at once
+    matcher.add("EMOTION", EMOTION_WORDS)
+    matcher.add("WEASEL", WEASEL_WORDS)
+    matcher.add("HEDGE", HEDGE_WORDS)
+    matcher.add("BUZZWORDS", BUZZWORDS_WORDS)
+    #NLP the lexicons and then do the phrasematcher thingy
+    matches = matcher(docs)
+    for id, start, end in matches:
+        if (nlp.vocab.strings[id] == "EMOTION"):
+            emotion_count+=1
+        elif (nlp.vocab.strings[id] == "WEASEL"):
+            weasel_count_count+=1
+        elif (nlp.vocab.strings[id] == "HEDGE"):
+            hedge_count+=1
+        elif (nlp.vocab.strings[id] == "BUZZ"):
+            buzzwords_count_count+=1
+        
 
-    for sent in docs.sents:
-        #NLP the lexicons and then do the phrasematcher thingy
-        for token in sent:
-            if token.lemma_.lower() in EMOTION_WORDS:
-                emotion_count += 1
-            if token.lemma_.lower() in WEASEL_WORDS:
-                weasel_count += 1
-            if token.lemma_.lower() in HEDGE_WORDS:
-                hedge_count += 1
-            if token.lemma_.lower() in BUZZWORDS_WORDS:
-                buzzwords_count += 1
     metrics = {
         "active": active,
         "passive": passive,
