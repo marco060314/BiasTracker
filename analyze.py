@@ -66,11 +66,11 @@ def bias_analysis(docs):
         if (nlp.vocab.strings[id] == "EMOTION"):
             emotion_count+=1
         elif (nlp.vocab.strings[id] == "WEASEL"):
-            weasel_count_count+=1
+            weasel_count+=1
         elif (nlp.vocab.strings[id] == "HEDGE"):
             hedge_count+=1
         elif (nlp.vocab.strings[id] == "BUZZ"):
-            buzzwords_count_count+=1
+            buzzwords_count+=1
         
 
     metrics = {
@@ -88,34 +88,41 @@ def bias_analysis(docs):
     
 #check for passive voice vs active voice, and check for when the agent is omitted
 def agent_analysis(docs):
+    PASSIVE_AUX_VERBS = {"is", "are", "was", "were", "be", "been", "being", "get", "got"}
     active_count = 0
     passive_count = 0
     omitted_agent_count = 0
-    for sent in docs.sents:
-        passive = False
-        agent = False
-        nsubj = False
-        nsubjpass = False
-        auxpass = False
+    has_nsubjpass = False
+    has_nsubj = False
+    has_be_aux = False
+    has_vbn_main_verb = False
+    has_by_agent = False
     
+    for sent in docs.sents:
         for token in sent:
-            if token.dep_ == "nsubj":
-                nsubj = True
             if token.dep_ == "nsubjpass":
-                nsubjpass = True
-            if token.dep_ == "auxpass":
-                auxpass = True
-            if token.dep_ == "agent":
-                for child in token.children:
-                    if child.dep_ == "pobj":
-                        agent = True
-    if nsubjpass and auxpass:
-        passive = True
-        passive_count += 1
-        if not agent:
-            omitted_agent_count += 1
-    elif nsubj:
-        active_count += 1
+                has_nsubjpass = True
+            elif token.dep_ == "nsubj":
+                has_nsubj = True
+
+            if token.dep_ in {"aux", "auxpass"} and token.lemma_ in {"be", "get"}:
+                has_be_aux = True
+
+            if token.dep_ == "ROOT" and token.tag_ == "VBN":
+                has_vbn_main_verb = True
+
+            if token.dep_ == "agent" or (token.dep_ == "prep" and token.text.lower() == "by"):
+                has_by_agent = True
+
+
+        if has_nsubjpass and has_be_aux:
+            if has_by_agent:
+                passive_count += 1
+            else:
+                omitted_agent_count += 1
+        else:
+            active_count += 1
+
 
     return active_count, passive_count, omitted_agent_count
 
