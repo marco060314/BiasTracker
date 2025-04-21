@@ -6,6 +6,8 @@
 
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
+# custom_pipeline.py
+
 
 
 class BiastrackerScraperPipeline:
