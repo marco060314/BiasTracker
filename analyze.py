@@ -18,7 +18,6 @@ classifier = pipeline("sentiment-analysis", model="distilbert-base-uncased-finet
 
                                          
 def get_docs(article):
-    print(article)
     BATCH_SIZE = 8
     #article length is empty twin its cooked
     docs = nlp(article[0]["article"])
