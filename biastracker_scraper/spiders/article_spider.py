@@ -6,7 +6,9 @@ class ArticleSpider(scrapy.Spider):
     name = "article"
     
     def __init__(self, url=None, *args, **kwargs):
+        print("spider initialized")
         super().__init__(*args, **kwargs)
+        self.scraped_data = []
         if url:
             self.start_urls = [url]
         else:
@@ -15,6 +17,7 @@ class ArticleSpider(scrapy.Spider):
         print("ERROR OCCURRED:", failure)
 
     def start_requests(self):
+        print("start request triggered")
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -38,9 +41,12 @@ class ArticleSpider(scrapy.Spider):
         headline = doc.short_title()
 
         selector = scrapy.Selector(text=doc.summary())
-        
+        self.scraped_data.append({
+            "url": response.url,
+            "title": headline,
+            "text": article_text,
+        })
         paragraphs = selector.css("p::text").getall()
-        print("ehllo")
         article_text = " ".join(p.strip() for p in paragraphs if p.strip())
         print("Headline:", headline)
         print("Paragraph count:", len(paragraphs))
@@ -51,3 +57,8 @@ class ArticleSpider(scrapy.Spider):
             "headline": headline,
             "article": article_text
         }
+    def close(self, reason):
+        import json
+        print(json.dumps(self.scraped_data))
+
+

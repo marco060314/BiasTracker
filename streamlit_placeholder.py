@@ -15,5 +15,5 @@ def run_program(url):
     #print(misinfo)
     return avg_polarity, std_dev, metrics
 
-#run_program("https://www.foxnews.com/media/supreme-court-consider-whether-parents-can-opt-out-kids-reading-lgbtq-books-classroom")
+run_program("https://www.foxnews.com/media/supreme-court-consider-whether-parents-can-opt-out-kids-reading-lgbtq-books-classroom")
 
