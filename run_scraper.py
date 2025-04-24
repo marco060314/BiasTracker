@@ -1,35 +1,27 @@
-from scrapy.crawler import CrawlerProcess
-from scrapy.utils.project import get_project_settings
-from biastracker_scraper.spiders.article_spider import ArticleSpider
-from custom_pipeline import CustomPipeline
-from scrapy.signalmanager import dispatcher
-from scrapy import signals
+import subprocess
+import json
+import os
+import sys
 
 def run_scraper(target_url):
-    scraped_data = []
+    # Ensure you're in the directory with scrapy.cfg
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    def collect_item(item, **kwargs):
-        print("📥 Signal captured item:", item["url"])
-        scraped_data.append(item)
+    result = subprocess.run(
+        [
+            sys.executable, "-m", "scrapy",
+            "crawl", "article",         # ← spider name
+            "-a", f"url={target_url}"  # ← pass the URL as an argument
+        ],
+        capture_output=True,
+        text=True
+    )
 
-    dispatcher.connect(collect_item, signal=signals.item_passed)
-    
-    #pipeline = CustomPipeline()
+    lines = result.stdout.strip().splitlines()
+    try:
+        return json.loads(lines[-1])
+    except Exception:
+        print("Full Scrapy output:\n", result.stdout)
+        return {"error": "Failed to parse JSON", "raw_output": result.stdout}
 
-    process = CrawlerProcess(settings={
-        **get_project_settings(),
-        "LOG_ENABLED": False,
-        "REDIRECT_ENABLED": True,
-        "DONT_REDIRECT": False,
-        "HTTPERROR_ALLOWED_CODES": [301, 302],
-        "ITEM_PIPELINES": {"custom_pipeline.CustomPipeline": 1}, 
-    })
-
-    process.crawl(ArticleSpider, url=target_url)
-    process.start()
-
-    return scraped_data
-
-#print(run_scraper("https://www.cnn.com/2025/04/20/politics/democrat-crisis-recruitment-campaigns/index.html"))
-
-    
+#print(run_scraper("https://www.foxnews.com/media/supreme-court-consider-whether-parents-can-opt-out-kids-reading-lgbtq-books-classroom"))
