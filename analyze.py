@@ -1,15 +1,15 @@
-import run_scraper
-import torch
+#import run_scraper
+#import torch
 import math
 from transformers import pipeline
 import spacy
-from spacy.tokens import DocBin
+#from spacy.tokens import DocBin
 from lexicons import HEDGE_WORDS, WEASEL_WORDS, BUZZWORDS_WORDS, EMOTION_WORDS
 from spacy.matcher import PhraseMatcher
-import os
+#import os
 from sentence_transformers import SentenceTransformer, util
-import requests
-import json
+#import requests
+#import json
 
 
 nlp = spacy.load("en_core_web_sm")
